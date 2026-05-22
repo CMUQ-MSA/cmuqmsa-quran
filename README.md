@@ -35,6 +35,18 @@ Since this is a static web application, no backend server is required.
 * Install the "Live Server" extension.
 * Right-click `index.html` and select "Open with Live Server".
 
+## Production
+
+This app is intended to run at **quran.cmuqmsa.org**.
+
+Build the production container:
+
+```bash
+docker build -t cmuqmsa-quran .
+```
+
+The container serves static files on internal port `80`. In production, the central `cmuqmsa-infra` Caddy router sends `quran.cmuqmsa.org` traffic to this container.
+
 ## 🤝 Contributing
 
 Contributions are welcome! If you'd like to improve the UI or add new features (like audio recitation or Tafsir):
