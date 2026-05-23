@@ -8,7 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // API Configuration
     const BASE_URL = 'https://api.quran.com/api/v4';
-    const TRANSLATION_ID = 20; 
+    const TRANSLATION_ID = 20;
+    const FETCH_TIMEOUT_MS = 10000;
 
     // State Management
     let verseState = {
@@ -136,9 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Core Logic ---
 
     async function fetchRandomAyah() {
-        const response = await fetch(`${BASE_URL}/verses/random?translations=${TRANSLATION_ID}&fields=text_uthmani`);
-        if (!response.ok) throw new Error('Failed to fetch random ayah');
-        const data = await response.json();
+        const data = await fetchJson(`${BASE_URL}/verses/random?translations=${TRANSLATION_ID}&fields=text_uthmani`);
         return data.verse;
     }
 
@@ -148,9 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const verse = parseInt(verseStr);
 
         // Fetch chapter info
-        const chapterResponse = await fetch(`${BASE_URL}/chapters/${chapter}`);
-        if (!chapterResponse.ok) throw new Error('Failed to fetch chapter info');
-        const chapterData = await chapterResponse.json();
+        const chapterData = await fetchJson(`${BASE_URL}/chapters/${chapter}`);
         
         // UPDATE STATE: Store name and counts
         verseState.totalVerses = chapterData.chapter.verses_count;
@@ -168,10 +165,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchVersesSafe(keys) {
         const promises = keys.map(async (key) => {
             const url = `${BASE_URL}/verses/by_key/${key}?translations=${TRANSLATION_ID}&fields=text_uthmani`;
-            const res = await fetch(url);
-            if (!res.ok) return null;
-            const data = await res.json();
-            return data.verse;
+            try {
+                const data = await fetchJson(url);
+                return data.verse;
+            } catch {
+                return null;
+            }
         });
 
         const results = await Promise.all(promises);
@@ -190,19 +189,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const card = document.createElement('div');
         card.className = `verse-card ${isMain ? 'main-verse' : 'context-verse'}`;
-        
-        card.innerHTML = `
-            <div class="verse-header">
-                <span>${isMain ? 'Selected Ayah' : 'Context'}</span>
-                <span class="badge">${headerText}</span>
-            </div>
-            <div class="arabic-text">
-                ${verse.text_uthmani}
-            </div>
-            <div class="translation-text">
-                ${removeFootnotes(translation)}
-            </div>
-        `;
+
+        const header = document.createElement('div');
+        header.className = 'verse-header';
+        const label = document.createElement('span');
+        label.textContent = isMain ? 'Selected Ayah' : 'Context';
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = headerText;
+        header.append(label, badge);
+
+        const arabic = document.createElement('div');
+        arabic.className = 'arabic-text';
+        arabic.textContent = verse.text_uthmani || '';
+
+        const translationEl = document.createElement('div');
+        translationEl.className = 'translation-text';
+        translationEl.textContent = removeFootnotes(translation);
+
+        card.append(header, arabic, translationEl);
         return card;
     }
 
@@ -221,7 +226,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function removeFootnotes(text) {
-        return text.replace(/<sup.*?<\/sup>/g, '').replace(/\[\d+\]/g, '');       
+        return text.replace(/<sup.*?<\/sup>/g, '').replace(/\[\d+\]/g, '');
+    }
+
+    async function fetchJson(url, attempts = 2) {
+        let lastError;
+        for (let attempt = 0; attempt < attempts; attempt++) {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                lastError = error;
+                if (attempt < attempts - 1) {
+                    await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+                }
+            } finally {
+                clearTimeout(timeout);
+            }
+        }
+        throw lastError || new Error('Fetch failed');
     }
 
     function showError(msg) {
