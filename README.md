@@ -26,7 +26,7 @@ Since this is a static web application, no backend server is required.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/yourusername/quran-context-app.git](https://github.com/yourusername/quran-context-app.git)
+    git clone https://github.com/CMUQ-MSA/cmuqmsa-quran.git
     ```
 2.  **Open the project:**
     Navigate to the folder and open `index.html` in your browser.
@@ -37,15 +37,21 @@ Since this is a static web application, no backend server is required.
 
 ## Production
 
-This app is intended to run at **quran.cmuqmsa.org**.
-
 Build the production container:
 
 ```bash
 docker build -t cmuqmsa-quran .
 ```
 
-The container serves static files on internal port `80`. In production, the central `cmuqmsa-infra` Caddy router sends `quran.cmuqmsa.org` traffic to this container.
+The container serves static files on port **8080** inside the container. Use a reverse proxy in front for HTTPS and your public hostname.
+
+Health endpoint:
+
+```bash
+curl http://localhost:8080/healthz
+```
+
+Runtime dependency: the browser fetches Quran text and translations from Quran.com API v4. Container health only proves local static serving works; it does not prove Quran.com is reachable.
 
 ## 🤝 Contributing
 
