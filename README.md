@@ -3,7 +3,7 @@
 ![App Status](https://img.shields.io/badge/status-active-success.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-A lightweight web application designed for the **CMU-Q Muslim Student Association**. This tool allows users to discover random ayahs from the Quran and dynamically load surrounding verses to understand the full context.
+A lightweight web application designed for the **CMU-Q Muslim Students Association**. This tool allows users to discover random ayahs from the Quran and dynamically load surrounding verses to understand the full context.
 
 ## 🌟 Features
 
@@ -66,4 +66,4 @@ Contributions are welcome! If you'd like to improve the UI or add new features (
 ##  Acknowledgments
 
 * Powered by the incredible [Quran.com API](https://quran.com/).
-* Developed for the CMU-Q Muslim Student Association.
+* Developed for the CMU-Q Muslim Students Association.
